@@ -1,0 +1,12 @@
+# Default code owners for the FinPilot AI repository
+* @finpilot-team
+
+# Frontend
+/frontend/ @frontend-team
+
+# Backend
+/backend/ @backend-team
+
+# Infrastructure
+/docker/ @devops-team
+/.github/ @devops-team

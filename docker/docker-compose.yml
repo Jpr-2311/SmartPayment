@@ -1,0 +1,59 @@
+# FinPilot AI - Docker Compose
+# Orchestrates all services for local development
+
+services:
+  # PostgreSQL Database
+  finpilot-db:
+    image: postgres:16-alpine
+    container_name: finpilot-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: finpilot_dev
+      POSTGRES_USER: finpilot
+      POSTGRES_PASSWORD: finpilot_dev_2026
+    ports:
+      - "5432:5432"
+    volumes:
+      - finpilot_pgdata:/var/lib/postgresql/data
+      - ../database/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U finpilot -d finpilot_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ASP.NET Core Backend API
+  finpilot-backend:
+    build:
+      context: ../backend
+      dockerfile: ../docker/backend.Dockerfile
+    container_name: finpilot-backend
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5000
+      ConnectionStrings__DefaultConnection: "Host=finpilot-db;Port=5432;Database=finpilot_dev;Username=finpilot;Password=finpilot_dev_2026"
+      FrontendUrl: "http://localhost:3000"
+    ports:
+      - "5000:5000"
+    depends_on:
+      finpilot-db:
+        condition: service_healthy
+
+  # Next.js Frontend
+  finpilot-frontend:
+    build:
+      context: ../frontend
+      dockerfile: ../docker/frontend.Dockerfile
+    container_name: finpilot-frontend
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:5000/api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - finpilot-backend
+
+volumes:
+  finpilot_pgdata:
+    name: finpilot_pgdata
