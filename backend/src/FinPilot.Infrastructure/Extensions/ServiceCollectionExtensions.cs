@@ -1,4 +1,7 @@
+using FinPilot.Application.Common.Interfaces;
+using FinPilot.Application.Identity.Interfaces;
 using FinPilot.Infrastructure.Persistence;
+using FinPilot.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,7 +18,7 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        // PostgreSQL + Entity Framework Core
+        // ── PostgreSQL + Entity Framework Core ───────────────
         services.AddDbContext<ApplicationDbContext>(options =>
         {
             options.UseNpgsql(
@@ -30,9 +33,19 @@ public static class ServiceCollectionExtensions
                 });
         });
 
-        // Register repositories (will be added in future phases)
-        // services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-        // services.AddScoped<IUnitOfWork, UnitOfWork>();
+        // ── Unit of Work ─────────────────────────────────────
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+        // ── Generic Repository ───────────────────────────────
+        services.AddScoped(typeof(IRepository<>), typeof(BaseRepository<>));
+
+        // ── Identity Repositories ────────────────────────────
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IRoleRepository, RoleRepository>();
+        services.AddScoped<IPermissionRepository, PermissionRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<ILoginHistoryRepository, LoginHistoryRepository>();
+        services.AddScoped<IUserSessionRepository, UserSessionRepository>();
 
         return services;
     }

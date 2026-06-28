@@ -7,7 +7,7 @@ namespace FinPilot.Shared.Constants;
 public static class AppConstants
 {
     public const string AppName = "FinPilot AI";
-    public const string AppVersion = "0.1.0";
+    public const string AppVersion = "0.2.0";
 
     /// <summary>
     /// API versioning constants.
@@ -44,5 +44,22 @@ public static class AppConstants
         public const string Unauthorized = "You are not authorized to perform this action.";
         public const string ValidationFailed = "One or more validation errors occurred.";
         public const string InternalError = "An unexpected error occurred. Please try again later.";
+    }
+
+    /// <summary>
+    /// Database table names for consistent naming across configurations.
+    /// </summary>
+    public static class Tables
+    {
+        public const string Users = "users";
+        public const string Roles = "roles";
+        public const string Permissions = "permissions";
+        public const string UserRoles = "user_roles";
+        public const string RolePermissions = "role_permissions";
+        public const string RefreshTokens = "refresh_tokens";
+        public const string EmailVerificationTokens = "email_verification_tokens";
+        public const string PasswordResetTokens = "password_reset_tokens";
+        public const string LoginHistory = "login_history";
+        public const string UserSessions = "user_sessions";
     }
 }

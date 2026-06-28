@@ -1,11 +1,14 @@
+using FinPilot.Domain.Common;
+using FinPilot.Domain.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace FinPilot.Infrastructure.Persistence;
 
 /// <summary>
 /// Entity Framework Core DbContext for the FinPilot application.
-/// This is the central point for database interaction.
-/// Entity configurations are applied from the Configurations folder.
+/// Central point for all database interactions.
+/// Handles audit field population and soft-delete query filters.
+/// Entity configurations are auto-discovered from the Configurations folder.
 /// </summary>
 public class ApplicationDbContext : DbContext
 {
@@ -14,8 +17,37 @@ public class ApplicationDbContext : DbContext
     {
     }
 
-    // DbSets will be added in future phases as entities are created
-    // Example: public DbSet<User> Users => Set<User>();
+    // ── Identity DbSets ──────────────────────────────────────
+
+    /// <summary>Application users.</summary>
+    public DbSet<User> Users => Set<User>();
+
+    /// <summary>Security roles.</summary>
+    public DbSet<Role> Roles => Set<Role>();
+
+    /// <summary>Granular permissions.</summary>
+    public DbSet<Permission> Permissions => Set<Permission>();
+
+    /// <summary>User-to-role assignments.</summary>
+    public DbSet<UserRole> UserRoles => Set<UserRole>();
+
+    /// <summary>Role-to-permission assignments.</summary>
+    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+
+    /// <summary>Hashed refresh tokens.</summary>
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
+    /// <summary>Email verification tokens.</summary>
+    public DbSet<EmailVerificationToken> EmailVerificationTokens => Set<EmailVerificationToken>();
+
+    /// <summary>Password reset tokens.</summary>
+    public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
+
+    /// <summary>Login audit trail.</summary>
+    public DbSet<LoginHistory> LoginHistory => Set<LoginHistory>();
+
+    /// <summary>Active user sessions.</summary>
+    public DbSet<UserSession> UserSessions => Set<UserSession>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -26,12 +58,27 @@ public class ApplicationDbContext : DbContext
     }
 
     /// <summary>
-    /// Override SaveChangesAsync to automatically set audit fields.
+    /// Override SaveChangesAsync to automatically populate audit fields
+    /// on entities inheriting from <see cref="BaseAuditableEntity"/>.
     /// </summary>
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        // Future: Automatically set CreatedAt, UpdatedAt, CreatedBy, UpdatedBy
-        // on BaseAuditableEntity instances
+        var utcNow = DateTime.UtcNow;
+
+        foreach (var entry in ChangeTracker.Entries<BaseAuditableEntity>())
+        {
+            switch (entry.State)
+            {
+                case EntityState.Added:
+                    entry.Entity.CreatedAt = utcNow;
+                    break;
+
+                case EntityState.Modified:
+                    entry.Entity.UpdatedAt = utcNow;
+                    break;
+            }
+        }
+
         return await base.SaveChangesAsync(cancellationToken);
     }
 }
